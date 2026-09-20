@@ -1,0 +1,12 @@
+{
+  "name": "Elliot Companion",
+  "short_name": "Elliot",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#050805",
+  "theme_color": "#050805",
+  "description": "Private local AI companion",
+  "icons": [
+    {"src":"./icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}

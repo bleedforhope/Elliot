@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#050805">
+<meta name="description" content="Private local Elliot companion">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg">
+<title>elliot@internal:~$</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="crt">
+<main class="terminal">
+  <header class="topbar">
+    <span>fsociety // INTERNAL</span>
+    <span id="status">MODEL OFFLINE</span>
+  </header>
+
+  <section id="screen" class="screen" aria-live="polite"></section>
+
+  <section id="setup" class="setup">
+    <div class="setup-title">LOCAL MODEL</div>
+    <p id="setup-text">A small language model runs on this phone. The first launch downloads about 300 MB.</p>
+    <button id="load-model">INITIALIZE ELLIOT</button>
+    <div class="progress-wrap"><div id="progress"></div></div>
+  </section>
+
+  <form id="chat-form" class="input-row">
+    <span class="prompt">friend@fsociety:~$</span>
+    <input id="prompt" autocomplete="off" spellcheck="false" disabled>
+    <button id="send" disabled>SEND</button>
+  </form>
+
+  <footer>
+    <span>LOCAL AI</span>
+    <span>NO CLOUD</span>
+    <button id="clear" class="tiny">CLEAR</button>
+  </footer>
+</main>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
