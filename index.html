@@ -1,45 +1,64 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#050805">
-<meta name="description" content="Private local Elliot companion">
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" href="./icon.svg">
-<title>elliot@internal:~$</title>
-<link rel="stylesheet" href="./style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0c0c0c">
+  <title>Elliot</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="crt">
-<main class="terminal">
-  <header class="topbar">
-    <span>fsociety // INTERNAL</span>
-    <span id="status">MODEL OFFLINE</span>
-  </header>
+  <main class="terminal" aria-label="Elliot terminal">
+    <div id="output" class="output"></div>
 
-  <section id="screen" class="screen" aria-live="polite"></section>
+    <form id="commandForm" class="command-line" autocomplete="off">
+      <span id="prompt" class="prompt">C:\Users\friend&gt;</span>
+      <input id="commandInput" class="command-input" type="text"
+             autocomplete="off" autocapitalize="sentences"
+             spellcheck="false" aria-label="Command">
+    </form>
+  </main>
 
-  <section id="setup" class="setup">
-    <div class="setup-title">LOCAL MODEL</div>
-    <p id="setup-text">A small language model runs on this phone. The first launch downloads about 300 MB.</p>
-    <button id="load-model">INITIALIZE ELLIOT</button>
-    <div class="progress-wrap"><div id="progress"></div></div>
+  <button id="settingsButton" class="settings-button" type="button" aria-label="Settings">[ settings ]</button>
+
+  <section id="settingsPanel" class="settings-panel" hidden>
+    <div class="settings-title">Elliot configuration</div>
+
+    <label>
+      Provider
+      <select id="provider">
+        <option value="openai">OpenAI</option>
+        <option value="anthropic">Anthropic Claude</option>
+      </select>
+    </label>
+
+    <label>
+      Model
+      <input id="model" type="text" value="gpt-4o" spellcheck="false">
+    </label>
+
+    <label>
+      API key
+      <input id="apiKey" type="password" placeholder="Paste your API key" autocomplete="off">
+    </label>
+
+    <label class="checkbox-row">
+      <input id="rememberKey" type="checkbox">
+      <span>Remember key on this device</span>
+    </label>
+
+    <div class="settings-actions">
+      <button id="saveSettings" type="button">Save</button>
+      <button id="clearSettings" type="button">Clear key</button>
+      <button id="closeSettings" type="button">Close</button>
+    </div>
+
+    <p class="warning">
+      This is a static browser app. Your API key is used directly by your browser to call the selected provider.
+      Never put a key into the source code or repository.
+    </p>
   </section>
 
-  <form id="chat-form" class="input-row">
-    <span class="prompt">friend@fsociety:~$</span>
-    <input id="prompt" autocomplete="off" spellcheck="false" disabled>
-    <button id="send" disabled>SEND</button>
-  </form>
-
-  <footer>
-    <span>LOCAL AI</span>
-    <span>NO CLOUD</span>
-    <button id="clear" class="tiny">CLEAR</button>
-  </footer>
-</main>
-</div>
-<script type="module" src="./app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

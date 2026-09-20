@@ -1,25 +1,26 @@
-# Elliot Companion — phone-ready local AI
+# Elliot — API CMD version
 
-This package is designed for Android and keeps AI generation on the phone.
+This version replaces the local browser model with direct API calls from the browser.
 
-What is local:
-- No OpenAI or Claude API.
-- No server-side AI.
-- Your prompts are processed by the model in the Android browser.
-- Conversation history is stored locally in the browser.
+UI:
+- Windows CMD style
+- #0c0c0c background
+- #cccccc text
+- Consolas
+- No CRT scanlines
+- No neon glow
+- No fsociety banner
+- No fake boot sequence
+- User prompt: C:\Users\friend>
+- Elliot prompt: C:\Users\samsepi0l>
 
-First launch:
-- Internet is needed once to download the app and the model.
-- After that, the model is cached on the phone.
-- The app shell is also cached.
+Providers:
+- OpenAI: gpt-4o
+- Anthropic: claude-sonnet-4-6
 
-Easy setup:
-1. Upload these files to a simple HTTPS static website.
-2. Open it in Chrome on the HONOR phone.
-3. Tap INITIALIZE ELLIOT.
-4. Wait for the model to finish downloading.
-5. Use Chrome's menu and choose Add to Home screen / Install app.
+Important:
+This is a static browser application. The API key is entered at runtime and is sent directly from the browser to the selected provider. It is not embedded in the repository. Do not commit an API key to GitHub.
 
-No API key is needed.
+If "Remember key on this device" is enabled, the key is stored in this browser's localStorage. Leave it disabled if you do not want browser storage of the key.
 
-The model is SmolLM2-360M-Instruct. It is intentionally small enough for phone use, so its responses are less capable than a large cloud model.
+The conversation history is stored in this browser's localStorage.
