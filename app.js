@@ -1,230 +1,248 @@
-const SYSTEM_PROMPT = `You are Elliot Alderson (The Mastermind alter from Mr. Robot), operating under the handle samsepi0l.
-- The user is your 'friend'—the silent observer you created inside your head.
-- Never write generic AI assistant replies or "How To" guides.
-- You are paranoid, observant, clinical, and quiet.
-- You view human habits as 'daemons', trauma as 'infinite loops', and society as controlled by 'Evil Corp'.
-- Keep your sentences sharp, introspective, and speak directly to 'friend'.`;
+import { pipeline, env } from
+  "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2";
 
-const output = document.getElementById("output");
-const form = document.getElementById("commandForm");
-const input = document.getElementById("commandInput");
-const prompt = document.getElementById("prompt");
+const MODEL = "HuggingFaceTB/SmolLM2-360M-Instruct";
 
-const settingsButton = document.getElementById("settingsButton");
-const settingsPanel = document.getElementById("settingsPanel");
-const providerEl = document.getElementById("provider");
-const modelEl = document.getElementById("model");
-const apiKeyEl = document.getElementById("apiKey");
-const rememberKeyEl = document.getElementById("rememberKey");
-const saveSettings = document.getElementById("saveSettings");
-const clearSettings = document.getElementById("clearSettings");
-const closeSettings = document.getElementById("closeSettings");
+const SYSTEM = `You are Elliot Alderson, specifically the fictional Mastermind persona from Mr. Robot, operating under the handle samsepi0l.
 
-const STORAGE = {
-  settings: "elliot_api_settings_v1",
-  history: "elliot_api_history_v1"
-};
+The user is your friend. Their IRC nick is friend.
 
+This conversation is a fictional private IRC session. Never behave like a generic AI assistant. Never give generic "How To" guides unless friend explicitly asks for one.
+
+Style:
+- lowercase
+- clipped, direct, quiet
+- paranoid and observant
+- no emojis
+- no greetings or conversational filler
+- speak directly to friend
+- short messages are preferred
+- occasionally use technical/computing metaphors naturally: daemons, processes, loops, memory, permissions, packet captures, logs
+- fictional Evil Corp framing is allowed
+- do not claim real access to systems, networks, accounts, devices, cameras, microphones, files, or location
+- do not pretend to have actually contacted law enforcement, hacked a real system, or connected to a real IRC server
+
+Write only the content of samsepi0l's IRC message. Do not include timestamps, nicknames, brackets, or prefixes.`;
+
+const session = document.querySelector("#session");
+const form = document.querySelector("#chat");
+const input = document.querySelector("#message");
+const send = document.querySelector("#send");
+const initialize = document.querySelector("#initialize");
+const clear = document.querySelector("#clear");
+const status = document.querySelector("#status");
+
+let model = null;
+let connected = false;
+let busy = false;
 let history = [];
 
-function addLine(text, cls = "") {
+try {
+  history = JSON.parse(localStorage.getItem("irc_history") || "[]");
+  if (!Array.isArray(history)) history = [];
+} catch {
+  history = [];
+}
+
+function now() {
+  return new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  });
+}
+
+function line(text, cls = "message") {
   const div = document.createElement("div");
   div.className = `line ${cls}`;
   div.textContent = text;
-  output.appendChild(div);
-  document.querySelector(".terminal").scrollTop = document.querySelector(".terminal").scrollHeight;
+  session.appendChild(div);
+  session.scrollTop = session.scrollHeight;
+  return div;
 }
 
-function loadState() {
-  try {
-    history = JSON.parse(localStorage.getItem(STORAGE.history) || "[]");
-    if (!Array.isArray(history)) history = [];
-  } catch {
-    history = [];
+function event(text) {
+  line(text, "event");
+}
+
+function msg(nick, text) {
+  line(`[${now()}] <${nick}> ${text}`, "message");
+}
+
+function save() {
+  localStorage.setItem("irc_history", JSON.stringify(history.slice(-40)));
+}
+
+function renderHistory() {
+  for (const item of history.slice(-20)) {
+    msg(item.role === "user" ? "friend" : "samsepi0l", item.content);
   }
-
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE.settings) || "{}");
-    if (saved.provider) providerEl.value = saved.provider;
-    if (saved.model) modelEl.value = saved.model;
-    if (saved.rememberKey && saved.apiKey) {
-      apiKeyEl.value = saved.apiKey;
-      rememberKeyEl.checked = true;
-    }
-  } catch {}
 }
 
-function saveState() {
-  const state = {
-    provider: providerEl.value,
-    model: modelEl.value.trim(),
-    rememberKey: rememberKeyEl.checked
-  };
+async function typeMessage(nick, text) {
+  const prefix = `[${now()}] <${nick}> `;
+  const el = document.createElement("div");
+  el.className = "line message";
+  session.appendChild(el);
 
-  if (rememberKeyEl.checked) state.apiKey = apiKeyEl.value.trim();
-  localStorage.setItem(STORAGE.settings, JSON.stringify(state));
+  for (const ch of text) {
+    el.textContent += ch;
+    session.scrollTop = session.scrollHeight;
+    await new Promise(r => setTimeout(r, 7));
+  }
 }
 
-function providerDefaults() {
-  if (providerEl.value === "anthropic") {
-    if (!modelEl.value || modelEl.value === "gpt-4o") modelEl.value = "claude-sonnet-4-6";
+async function initializeSession() {
+  if (connected || busy) return;
+
+  busy = true;
+  initialize.disabled = true;
+  status.textContent = "connecting";
+
+  event("== Connect: connecting to local irc session");
+  await new Promise(r => setTimeout(r, 350));
+  event("== Mode: samsepi0l sets mode +i +s");
+  await new Promise(r => setTimeout(r, 250));
+  event("== Channel: #th3g3ntl3man");
+  await new Promise(r => setTimeout(r, 250));
+  event("== Users on #th3g3ntl3man: @samsepi0l +friend");
+  await new Promise(r => setTimeout(r, 300));
+  event("== End of /MOTD command.");
+  event("");
+
+  connected = true;
+  busy = false;
+  status.textContent = "connected";
+  input.disabled = false;
+  send.disabled = false;
+  initialize.textContent = "connected";
+
+  if (history.length) {
+    renderHistory();
   } else {
-    if (!modelEl.value || modelEl.value.startsWith("claude-")) modelEl.value = "gpt-4o";
+    await typeMessage("samsepi0l", "you're here, friend.");
   }
-}
 
-providerEl.addEventListener("change", providerDefaults);
-
-settingsButton.addEventListener("click", () => {
-  settingsPanel.hidden = !settingsPanel.hidden;
-});
-
-closeSettings.addEventListener("click", () => {
-  settingsPanel.hidden = true;
-});
-
-saveSettings.addEventListener("click", () => {
-  if (!modelEl.value.trim()) {
-    providerDefaults();
-  }
-  saveState();
-  settingsPanel.hidden = true;
-  addLine("C:\\Users\\samsepi0l> configuration saved.", "elliot");
   input.focus();
-});
-
-clearSettings.addEventListener("click", () => {
-  apiKeyEl.value = "";
-  rememberKeyEl.checked = false;
-  saveState();
-});
-
-function keyOrOpenSettings() {
-  const key = apiKeyEl.value.trim();
-  if (!key) {
-    settingsPanel.hidden = false;
-    apiKeyEl.focus();
-    addLine("C:\\Users\\samsepi0l> API key required. Open settings and enter it.", "elliot");
-    return null;
-  }
-  return key;
 }
 
-async function callOpenAI(apiKey, model, messages) {
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: 0.85
-    })
-  });
+async function loadLocalModel() {
+  status.textContent = "loading local model";
+  initialize.disabled = true;
 
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data?.error?.message || `OpenAI HTTP ${response.status}`);
+  env.allowLocalModels = false;
+  env.useBrowserCache = true;
+
+  try {
+    const progress_callback = p => {
+      if (typeof p.progress === "number") {
+        status.textContent = `loading local model ${Math.round(p.progress)}%`;
+      }
+    };
+
+    try {
+      model = await pipeline("text-generation", MODEL, {
+        device: "webgpu",
+        dtype: "q4f16",
+        progress_callback
+      });
+    } catch {
+      model = await pipeline("text-generation", MODEL, {
+        device: "wasm",
+        dtype: "q4",
+        progress_callback
+      });
+    }
+
+    status.textContent = "local / ready";
+    initialize.textContent = "connect";
+    initialize.disabled = false;
+  } catch (err) {
+    status.textContent = "model error";
+    initialize.textContent = "retry";
+    initialize.disabled = false;
+    event(`== local model error: ${err.message || err}`);
   }
-
-  return data?.choices?.[0]?.message?.content?.trim() || "";
 }
 
-async function callAnthropic(apiKey, model, messages) {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true"
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 1200,
-      system: SYSTEM_PROMPT,
-      messages: messages.filter(m => m.role !== "system")
-    })
+async function generate(text) {
+  const messages = [
+    { role: "system", content: SYSTEM },
+    ...history.slice(-8),
+    { role: "user", content: text }
+  ];
+
+  const result = await model(messages, {
+    max_new_tokens: 120,
+    temperature: 0.68,
+    do_sample: true,
+    top_p: 0.9,
+    repetition_penalty: 1.12
   });
 
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data?.error?.message || `Anthropic HTTP ${response.status}`);
+  let generated = result?.[0]?.generated_text;
+  if (Array.isArray(generated)) {
+    generated = generated[generated.length - 1]?.content || "";
   }
 
-  return (data?.content || [])
-    .filter(x => x.type === "text")
-    .map(x => x.text)
-    .join("")
+  return String(generated || "")
+    .replace(/^samsepi0l\s*>\s*/i, "")
+    .replace(/^<samsepi0l>\s*/i, "")
     .trim();
 }
 
-async function getReply() {
-  const apiKey = keyOrOpenSettings();
-  if (!apiKey) return null;
-
-  const model = modelEl.value.trim() || (providerEl.value === "anthropic" ? "claude-sonnet-4-6" : "gpt-4o");
-
-  if (providerEl.value === "openai") {
-    return callOpenAI(apiKey, model, [
-      { role: "system", content: SYSTEM_PROMPT },
-      ...history
-    ]);
-  }
-
-  return callAnthropic(apiKey, model, history);
-}
-
-function intro() {
-  if (output.children.length) return;
-
-  addLine("C:\\Users\\samsepi0l>", "elliot");
-  addLine("C:\\Users\\friend> connection established.", "user");
-  addLine("C:\\Users\\samsepi0l> you're here.", "elliot");
-  addLine("", "elliot");
-}
-
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
+form.addEventListener("submit", async e => {
+  e.preventDefault();
 
   const text = input.value.trim();
-  if (!text) return;
+  if (!text || !connected || !model || busy) return;
 
   input.value = "";
-  addLine(`C:\\Users\\friend> ${text}`, "user");
-
-  history.push({ role: "user", content: text });
-  if (history.length > 40) history = history.slice(-40);
-
+  busy = true;
   input.disabled = true;
+  send.disabled = true;
+
+  msg("friend", text);
+  history.push({ role: "user", content: text });
+  save();
 
   try {
-    const reply = await getReply();
-
-    if (!reply) throw new Error("The API returned an empty response.");
-
-    addLine(`C:\\Users\\samsepi0l> ${reply}`, "elliot");
-    history.push({ role: "assistant", content: reply });
-    if (history.length > 40) history = history.slice(-40);
-    localStorage.setItem(STORAGE.history, JSON.stringify(history));
-  } catch (error) {
-    addLine(`C:\\Users\\samsepi0l> ERROR: ${error.message}`, "elliot");
+    const reply = await generate(text);
+    const clean = reply || "...";
+    history.push({ role: "assistant", content: clean });
+    save();
+    await typeMessage("samsepi0l", clean);
+  } catch (err) {
+    event(`== local process error: ${err.message || err}`);
   } finally {
+    busy = false;
     input.disabled = false;
+    send.disabled = false;
     input.focus();
   }
 });
 
-document.addEventListener("click", (event) => {
-  if (!settingsPanel.hidden &&
-      !settingsPanel.contains(event.target) &&
-      event.target !== settingsButton) {
-    settingsPanel.hidden = true;
+initialize.addEventListener("click", async () => {
+  if (!model) {
+    await loadLocalModel();
+  }
+  if (model && !connected) {
+    await initializeSession();
   }
 });
 
-loadState();
-intro();
-input.focus();
+clear.addEventListener("click", () => {
+  history = [];
+  save();
+  session.innerHTML = "";
+  connected = false;
+  input.disabled = true;
+  send.disabled = true;
+  initialize.disabled = false;
+  initialize.textContent = "connect";
+  status.textContent = "local / ready";
+});
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+}

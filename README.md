@@ -1,26 +1,18 @@
-# Elliot — API CMD version
+# Elliot — local IRC session
 
-This version replaces the local browser model with direct API calls from the browser.
+A local fictional IRC-style terminal inspired by the presentation of terminal conversations in Mr. Robot.
 
-UI:
-- Windows CMD style
-- #0c0c0c background
-- #cccccc text
-- Consolas
-- No CRT scanlines
-- No neon glow
-- No fsociety banner
-- No fake boot sequence
-- User prompt: C:\Users\friend>
-- Elliot prompt: C:\Users\samsepi0l>
+The app:
+- uses `samsepi0l` as Elliot's nick
+- uses `friend` as the user's nick
+- creates a local #th3g3ntl3man-style session
+- keeps the terminal session persistent
+- uses timestamps and IRC-style `<nick>` formatting
+- has no chat bubbles or modern UI
+- has no OpenAI/Claude API
+- runs the model locally in the browser
+- stores conversation history locally
 
-Providers:
-- OpenAI: gpt-4o
-- Anthropic: claude-sonnet-4-6
+The app does not connect to the real-world IP address or an actual IRC server.
 
-Important:
-This is a static browser application. The API key is entered at runtime and is sent directly from the browser to the selected provider. It is not embedded in the repository. Do not commit an API key to GitHub.
-
-If "Remember key on this device" is enabled, the key is stored in this browser's localStorage. Leave it disabled if you do not want browser storage of the key.
-
-The conversation history is stored in this browser's localStorage.
+Internet is required initially to download the model. Once cached, generation is performed on the phone.
